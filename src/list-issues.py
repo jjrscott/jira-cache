@@ -21,8 +21,19 @@ def list_issues(jira, cache_path, query, fields):
     requested_keys = set(map(lambda issue: issue['key'], response['issues']))
     handled_keys = set()
 
+    parent_keys = dict()
+
     for key in requested_keys:
-        handle_issue(conn, key)
+        parent_keys[key] = None
+
+    for key in requested_keys:
+        for relation,destination in sql_get_rows(conn, 'SELECT relation,destination FROM IssueLinks where source=?', key):
+            if relation in {'has parent', 'subtask of'}:
+                parent_keys[key]=destination
+
+    for key in sorted(requested_keys):
+        if parent_keys[key] not in requested_keys:
+            handle_issue(conn, key)
 
 validRelations = {
     'blocked by',
@@ -55,7 +66,7 @@ def handle_issue(conn, key, depth=0, prefix=""):
 
     for destination,relation in links.items():
         if relation in validRelations:
-            handle_issue(conn, destination,depth=depth+1, prefix=relation+" ")
+            handle_issue(conn, destination, depth=depth+1, prefix=relation+" ")
 
 class ArgumentParser(argparse.ArgumentParser):
     def add_argument(self, *args, **kwargs):
