@@ -8,10 +8,11 @@ import os
 import sys
 import sqlite3
 import configparser
+import re
 # from colorama import Fore, Back, Style
 
 
-def list_issues(jira, cache_path, query, fields):
+def list_issues(jira, cache_path, query, fields, format):
     response = jira.search(query, fields=fields)
     conn = sqlite3.connect(cache_path)
 
@@ -33,7 +34,7 @@ def list_issues(jira, cache_path, query, fields):
 
     for key in sorted(requested_keys):
         if parent_keys[key] not in requested_keys:
-            handle_issue(conn, key)
+            handle_issue(conn, key, format)
 
 validRelations = {
     'blocked by',
@@ -48,7 +49,7 @@ statusCategoryAttributes = {
 }
 
 
-def handle_issue(conn, key, depth=0, prefix=""):
+def handle_issue(conn, key, format, depth=0, prefix=""):
     for _,content in sql_get_rows(conn, 'SELECT key,content FROM IssueCache where key=? limit 1', key):
         pass
     # print(key, content)
@@ -58,7 +59,23 @@ def handle_issue(conn, key, depth=0, prefix=""):
     labels = value_in_dict(issue, 'fields', 'labels')
     statusCategory = value_in_dict(issue, 'fields', 'status', 'statusCategory', 'key')
 
-    print(f"{'  '*depth}{statusCategoryAttributes[statusCategory]['symbol']} {key} {summary}")
+    if format == 'summary':
+        print(f"{'  '*depth}{statusCategoryAttributes[statusCategory]['symbol']} {key} {summary}")
+    elif format == 'branch':
+        emailAddress = value_in_dict(issue, 'fields', 'assignee', 'emailAddress')
+        if emailAddress is None: return
+
+        emailAddress = re.sub(r'[\.@].*', '', emailAddress)
+
+        summary = summary.lower()
+
+        branch = f"{key}-{summary}"
+
+
+        branch = re.sub(r'\[[^\]]+\]', '', branch)
+        branch = re.sub(r'[^a-zA-Z0-9]+', '-', branch)
+
+        print(f"{'  '*depth}{statusCategoryAttributes[statusCategory]['symbol']} {emailAddress}/{branch}")
 
     links = dict()
     for relation,destination in sql_get_rows(conn, 'SELECT relation,destination FROM IssueLinks where source=?', key):
@@ -88,6 +105,7 @@ if __name__ == "__main__":
     parser.add_argument('--cache-path', required=True, help='path of the cache', default=value_in_dict(config, 'default', 'cache-path'))
     parser.add_argument('--json', action='store_true', help='output progress JSON fragments')
     parser.add_argument('--fields', default='*all', help='password to access JIRA')
+    parser.add_argument('--format', choices=['summary', 'branch'], default='summary', help='display format')
     parser.add_argument('--query', required=True, help='JQL to search for')
     args = parser.parse_args()
 
@@ -95,4 +113,4 @@ if __name__ == "__main__":
     cache_path = os.path.expanduser(args.cache_path)
 
     # exit(args)
-    list_issues(jira, cache_path, args.query, args.fields)
+    list_issues(jira, cache_path, args.query, args.fields, args.format)
