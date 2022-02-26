@@ -52,6 +52,8 @@ statusCategoryAttributes = {
 def handle_issue(conn, key, format, depth=0, prefix=""):
     for _,content in sql_get_rows(conn, 'SELECT key,content FROM IssueCache where key=? limit 1', key):
         pass
+    if not len(content):
+        raise Exception(f"Failed to retrieve issue: {key}")
     # print(key, content)
     issue = json.loads(content)
     issuetype = value_in_dict(issue, 'fields', 'issuetype', 'name')
@@ -83,7 +85,7 @@ def handle_issue(conn, key, format, depth=0, prefix=""):
 
     for destination,relation in links.items():
         if relation in validRelations:
-            handle_issue(conn, destination, depth=depth+1, prefix=relation+" ")
+            handle_issue(conn, destination, format, depth=depth+1, prefix=relation+" ")
 
 class ArgumentParser(argparse.ArgumentParser):
     def add_argument(self, *args, **kwargs):
