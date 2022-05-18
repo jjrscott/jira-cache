@@ -49,10 +49,16 @@ statusCategoryAttributes = {
 
 
 def handle_issue(conn, key, format, depth=0, prefix=""):
-    for _,content in sql_get_rows(conn, 'SELECT key,content FROM IssueCache where key=? limit 1', key):
+    # print(f"key {key}")
+    content = None
+    for content, in sql_get_rows(conn, 'SELECT content FROM IssueCache where key=? limit 1', key):
+        # print(f"content {content}")
         pass
-    if not len(content):
-        raise Exception(f"Failed to retrieve issue: {key}")
+
+    if content is None or not len(content):
+        print(f"❗ Missing issue, update the cache: {key}", file=sys.stderr)
+        return
+
     # print(key, content)
     issue = json.loads(content)
     issuetype = value_in_dict(issue, 'fields', 'issuetype', 'name')
