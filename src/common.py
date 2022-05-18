@@ -1,4 +1,6 @@
 import requests
+import json
+import sys
 
 class Jira:
     def __init__(self, jira_url, jira_user, jira_password):
@@ -16,6 +18,20 @@ class Jira:
                                 headers={'Content-type': 'application/json'},
                                 params=params)
         return result.json()
+
+    def searchAll(self, query, fields=None):
+        issues = list()
+        while True:
+            # print("search", file=sys.stderr)
+            result = self.search(query, startAt=len(issues), fields=fields)
+            if 'issues' in result and len(result['issues']) > 0:
+                issues += result['issues']
+                if 'total' in result and len(issues) >= result['total']:
+                    break
+            else:
+                break
+
+        return issues
 
 def sql_get_rows(conn, query, *values):
     return conn.execute(query, values)

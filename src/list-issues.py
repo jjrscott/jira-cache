@@ -13,13 +13,12 @@ import re
 
 
 def list_issues(jira, cache_path, query, fields, format):
-    response = jira.search(query, fields=fields)
+    issues = jira.searchAll(query, fields=fields)
     conn = sqlite3.connect(cache_path)
 
-    if 'issues' not in response: raise Exception('Expected keys not returned "issues"')
-    if len(response['issues']) == 0: return
+    if len(issues) == 0: return
 
-    requested_keys = set(map(lambda issue: issue['key'], response['issues']))
+    requested_keys = set(map(lambda issue: issue['key'], issues))
     handled_keys = set()
 
     parent_keys = dict()
