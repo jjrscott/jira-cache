@@ -18,7 +18,7 @@ def list_issues(jira, cache_path, query, fields, format):
 
     if len(issues) == 0: return
 
-    requested_keys = set(map(lambda issue: issue['key'], issues))
+    requested_keys = list(map(lambda issue: issue['key'], issues))
     handled_keys = set()
 
     parent_keys = dict()
@@ -31,7 +31,7 @@ def list_issues(jira, cache_path, query, fields, format):
             if relation in {'has parent', 'subtask of'}:
                 parent_keys[key]=destination
 
-    for key in sorted(requested_keys):
+    for key in requested_keys:
         if parent_keys[key] not in requested_keys:
             handle_issue(jira, conn, key, format)
 
