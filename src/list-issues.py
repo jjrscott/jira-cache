@@ -33,7 +33,7 @@ def list_issues(jira, cache_path, query, fields, format):
 
     for key in sorted(requested_keys):
         if parent_keys[key] not in requested_keys:
-            handle_issue(conn, key, format)
+            handle_issue(jira, conn, key, format)
 
 validRelations = {
     'blocked by',
@@ -48,7 +48,7 @@ statusCategoryAttributes = {
 }
 
 
-def handle_issue(conn, key, format, depth=0, prefix=""):
+def handle_issue(jira, conn, key, format, depth=0, prefix=""):
     # print(f"key {key}")
     content = None
     for content, in sql_get_rows(conn, 'SELECT content FROM IssueCache where key=? limit 1', key):
@@ -68,6 +68,8 @@ def handle_issue(conn, key, format, depth=0, prefix=""):
 
     if format == 'summary':
         print(f"{'  '*depth}{statusCategoryAttributes[statusCategory]['symbol']} {key} {summary}")
+    elif format == 'markdown':
+        print(f"{'  '*depth}- {statusCategoryAttributes[statusCategory]['symbol']} [{key}]({jira.jira_url}/browse/{key}) {summary}")
     elif format == 'branch':
         emailAddress = value_in_dict(issue, 'fields', 'assignee', 'emailAddress')
         if emailAddress is None: return
@@ -90,7 +92,7 @@ def handle_issue(conn, key, format, depth=0, prefix=""):
 
     for destination,relation in links.items():
         if relation in validRelations:
-            handle_issue(conn, destination, format, depth=depth+1, prefix=relation+" ")
+            handle_issue(jira, conn, destination, format, depth=depth+1, prefix=relation+" ")
 
 class ArgumentParser(argparse.ArgumentParser):
     def add_argument(self, *args, **kwargs):
@@ -112,7 +114,7 @@ if __name__ == "__main__":
     parser.add_argument('--cache-path', required=True, help='path of the cache', default=value_in_dict(config, 'default', 'cache-path'))
     parser.add_argument('--json', action='store_true', help='output progress JSON fragments')
     parser.add_argument('--fields', default='*all', help='password to access JIRA')
-    parser.add_argument('--format', choices=['summary', 'branch'], default='summary', help='display format')
+    parser.add_argument('--format', choices=['summary', 'branch', 'markdown'], default='summary', help='display format')
     parser.add_argument('--query', required=True, help='JQL to search for')
     args = parser.parse_args()
 

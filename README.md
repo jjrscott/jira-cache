@@ -1,5 +1,5 @@
 
-Direct queries to Jira have two issues:
+Direct queries to [Jira](https://www.atlassian.com/software/jira) have two issues:
 
 1. they are sloooooow
 2. many queries are impossible with JQL
@@ -12,7 +12,7 @@ The following example updates the cache with all issues changes then displays al
 
 ```shell
 cache-issues.py
-list-issues.py --query 'summary ~ ios AND status in ("Code review", "In Progress", "To Do") AND  AND Sprint = 10' | grep -v <0001f7e9>
+list-issues.py --query 'summary ~ ios AND status in ("Code review", "In Progress", "To Do") AND  AND Sprint = 10'
 ```
 
 #### Output
@@ -73,17 +73,17 @@ Use the issues cached by `cache-issues.py` to add subtasks to the query results.
 
 ### Optional arguments
 ```
-  -h, --help            show this help message and exit
-  --jira-url JIRA_URL   JIRA base URL (default: None)
-  --jira-user JIRA_USER
-                        username to access JIRA (default: None)
-  --jira-password JIRA_PASSWORD
-                        password to access JIRA (default: None)
-  --cache-path CACHE_PATH
-                        path of the cache (default: None)
-  --json                output progress JSON fragments (default: False)
-  --fields FIELDS       password to access JIRA (default: *all)
-  --format {summary,branch}
-                        display format (default: summary)
-  --query QUERY         JQL to search for (default: None)
+-h, --help            show this help message and exit
+--jira-url JIRA_URL   JIRA base URL (default: None)
+--jira-user JIRA_USER
+                      username to access JIRA (default: None)
+--jira-password JIRA_PASSWORD
+                      password to access JIRA (default: None)
+--cache-path CACHE_PATH
+                      path of the cache (default: None)
+--json                output progress JSON fragments (default: False)
+--fields FIELDS       password to access JIRA (default: *all)
+--format {summary,branch,markdown}
+                      display format (default: summary)
+--query QUERY         JQL to search for (default: None)
 ```
