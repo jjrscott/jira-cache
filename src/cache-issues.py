@@ -11,12 +11,18 @@ import progress
 import sys
 from common import value_in_dict,sql_set_row, Jira
 
-def cache_issues(jira, cache_path):
+def cache_issues(jira, cache_path, should_clear_database):
     should_setup_database = False
     if not os.path.exists(cache_path):
         should_setup_database = True
 
     conn = sqlite3.connect(cache_path)
+
+
+    if should_clear_database:
+        print(f'Clear database')
+        conn.execute('DROP TABLE IF EXISTS IssueCache')
+        should_setup_database = True
 
     if should_setup_database:
         print(f'Setting up database')
@@ -163,15 +169,14 @@ class ArgumentParser(argparse.ArgumentParser):
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read(os.path.expanduser('~/.jira-cache.config'))
-    parser = ArgumentParser(description="Cache data from JIRA",
-                             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                             fromfile_prefix_chars='@')
+    parser = ArgumentParser(description="Cache JIRA issues in a database and generate 'view' tables to allow easier data access (e.g. parent child relationships).")
 
     parser.add_argument('--jira-url', required=True, help='JIRA base URL', default=value_in_dict(config, 'default', 'jira-url'))
     parser.add_argument('--jira-user', required=True, help='username to access JIRA', default=value_in_dict(config, 'default', 'jira-user'))
     parser.add_argument('--jira-password', required=True, help='password to access JIRA', default=value_in_dict(config, 'default', 'jira-password'))
     parser.add_argument('--cache-path', required=True, help='path of the cache', default=value_in_dict(config, 'default', 'cache-path'))
     parser.add_argument('--json', action='store_true', help='output progress JSON fragments')
+    parser.add_argument('--clear', action='store_true', help='clear the cache')
     args = parser.parse_args()
 
     progress.output_json = args.json
@@ -181,5 +186,5 @@ if __name__ == "__main__":
     cache_path = os.path.expanduser(args.cache_path)
 
     # exit(args)
-    cache_issues(jira, cache_path)
+    cache_issues(jira, cache_path, args.clear)
     rebuild_data_tables(cache_path)

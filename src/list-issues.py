@@ -9,7 +9,17 @@ import sys
 import sqlite3
 import configparser
 import re
-# from colorama import Fore, Back, Style
+
+filters = {
+    'my_open_issues' : 'assignee IN (currentUser()) AND statusCategory in ("To Do", "In Progress") ORDER BY created DESC',
+    'reported_by_me' : 'reporter IN (currentUser()) ORDER BY created DESC',
+    'open_issues' : 'statusCategory in ("To Do", "In Progress") ORDER BY updated DESC',
+    'done_issues' : 'statusCategory = "Done" ORDER BY created DESC',
+    'viewed_recently' : 'ORDER BY lastviewed DESC',
+    'resolved_recently' : 'resolved >= -1w ORDER BY updated DESC',
+    'updated_recently' : 'ORDER BY updated DESC',
+
+}
 
 
 def list_issues(jira, cache_path, query, fields, format):
@@ -104,8 +114,7 @@ class ArgumentParser(argparse.ArgumentParser):
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read(os.path.expanduser('~/.jira-cache.config'))
-    parser = ArgumentParser(description="List issues using the JIRA cache",
-                             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    parser = ArgumentParser(description="Use the issues cached by cache-issues.py to add subtasks to the query results.",
                              fromfile_prefix_chars='@')
 
     parser.add_argument('--jira-url', required=True, help='JIRA base URL', default=value_in_dict(config, 'default', 'jira-url'))
@@ -115,11 +124,17 @@ if __name__ == "__main__":
     parser.add_argument('--json', action='store_true', help='output progress JSON fragments')
     parser.add_argument('--fields', default='*all', help='password to access JIRA')
     parser.add_argument('--format', choices=['summary', 'branch', 'markdown'], default='summary', help='display format')
-    parser.add_argument('--query', required=True, help='JQL to search for')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--query', help='JQL to search for')
+    group.add_argument('--filter', choices=sorted(filters.keys()), help='Built in queries')
     args = parser.parse_args()
 
     jira = Jira(args.jira_url, args.jira_user, args.jira_password)
     cache_path = os.path.expanduser(args.cache_path)
 
+    query = args.query
+    if args.filter is not None:
+        query = filters[args.filter]
+
     # exit(args)
-    list_issues(jira, cache_path, args.query, args.fields, args.format)
+    list_issues(jira, cache_path, query, args.fields, args.format)

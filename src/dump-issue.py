@@ -22,8 +22,7 @@ class ArgumentParser(argparse.ArgumentParser):
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read(os.path.expanduser('~/.jira-cache.config'))
-    parser = ArgumentParser(description="Dump a JIRA issue to STDOUT",
-                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = ArgumentParser(description="Dump a JIRA issue to STDOUT")
 
     parser.add_argument('--jira-url', required=True, help='JIRA base URL', default=value_in_dict(config, 'default', 'jira-url'))
     parser.add_argument('--jira-user', required=True, help='username to access JIRA', default=value_in_dict(config, 'default', 'jira-user'))

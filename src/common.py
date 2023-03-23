@@ -1,6 +1,7 @@
 import requests
 import json
 import sys
+import time
 
 class Jira:
     def __init__(self, jira_url, jira_user, jira_password):
@@ -13,11 +14,22 @@ class Jira:
         params['jql'] = query
         if fields: params['fields'] = fields
         if startAt: params['startAt'] = startAt
-        result = requests.get(self.jira_url+'/rest/api/3/search',
-                                auth=(self.jira_user, self.jira_password),
-                                headers={'Content-type': 'application/json'},
-                                params=params)
-        return result.json()
+        while True:
+            result = requests.get(self.jira_url+'/rest/api/3/search',
+                                    auth=(self.jira_user, self.jira_password),
+                                    headers={'Content-type': 'application/json'},
+                                    params=params)
+            # print(result.status_code, json.dumps(dict(result.headers), sort_keys=True, indent=2))
+            if result.status_code == 200:
+                return result.json()
+            elif result.status_code == 429:
+                retryAfter = 60
+                if 'Retry-After' in result.headers:
+                    retryAfter = int(result.headers['Retry-After'])
+                print(f'Too many requests. Retrying after {retryAfter}')
+                time.sleep(retryAfter)
+            else:
+                raise Exception()
 
     def searchAll(self, query, fields=None):
         issues = list()
