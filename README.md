@@ -28,7 +28,21 @@ list-issues.py --query 'summary ~ ios AND status in ("Code review", "In Progress
       🔴 GVO-23 Interactive display
 ```
 
-## Cache issues
+## Actions
+
+Default parameters can be stored in `~/.jira-cache.config`. For example:
+
+```
+[default]
+jira-url=https://example.atlassian.net
+jira-user=jjrscott@example.com
+jira-password=...
+cache-path=~/.jira-cache.sqlite
+```
+
+You can also use an [API Token](https://id.atlassian.com/manage-profile/security/api-tokens) in place of your normal password.
+
+### Cache issues
 
 ```
 usage: cache-issues.py [-h] [--jira-url JIRA_URL] [--jira-user JIRA_USER]
@@ -51,7 +65,7 @@ optional arguments:
   --clear               clear the cache
 ```
 
-## Dump issue
+### Dump issue
 
 ```
 usage: dump-issue.py [-h] [--jira-url JIRA_URL] [--jira-user JIRA_USER]
@@ -71,7 +85,7 @@ optional arguments:
   --query QUERY         JQL to search for
 ```
 
-## List issues
+### List issues
 
 ```
 usage: list-issues.py [-h] [--jira-url JIRA_URL] [--jira-user JIRA_USER]
